@@ -1,14 +1,13 @@
 ﻿using Azure.Identity;
+using Microsoft.AspNetCore.Mvc;
+using NSwag;
+using NSwag.Generation.Processors.Security;
 using PearsCleanV3.Application.Common.Interfaces;
 using PearsCleanV3.Infrastructure.Data;
 using PearsCleanV3.Web.Services;
-using Microsoft.AspNetCore.Mvc;
-
-using NSwag;
-using NSwag.Generation.Processors.Security;
 using ZymLabs.NSwag.FluentValidation;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace PearsCleanV3.Web;
 
 public static class DependencyInjection
 {

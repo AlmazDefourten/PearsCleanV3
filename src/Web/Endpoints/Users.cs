@@ -1,4 +1,5 @@
-﻿using PearsCleanV3.Infrastructure.Identity;
+﻿using PearsCleanV3.Domain.Entities;
+using PearsCleanV3.Infrastructure.Identity;
 
 namespace PearsCleanV3.Web.Endpoints;
 

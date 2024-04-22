@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Mvc;
+using PearsCleanV3.Infrastructure;
 using PearsCleanV3.Infrastructure.Data;
+using PearsCleanV3.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +11,7 @@ builder.Services.AddKeyVaultIfConfigured(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -41,8 +45,6 @@ app.UseSwaggerUi3(settings =>
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}/{id?}");
-
-app.MapRazorPages();
 
 app.MapFallbackToFile("index.html");
 

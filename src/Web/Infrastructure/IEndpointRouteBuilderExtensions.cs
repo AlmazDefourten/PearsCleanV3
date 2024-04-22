@@ -21,6 +21,16 @@ public static class IEndpointRouteBuilderExtensions
 
         return builder;
     }
+    
+    public static IEndpointRouteBuilder MapPostContext(this IEndpointRouteBuilder builder, Delegate handler, string pattern = "")
+    {
+        Guard.Against.AnonymousMethod(handler);
+
+        builder.MapPost(pattern, (HttpContext context) => Console.WriteLine(context.ToString()))
+            .WithName(handler.Method.Name);
+
+        return builder;
+    }
 
     public static IEndpointRouteBuilder MapPut(this IEndpointRouteBuilder builder, Delegate handler, string pattern)
     {

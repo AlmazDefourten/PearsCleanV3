@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PearsCleanV3.Infrastructure.Data;
@@ -11,9 +12,11 @@ using PearsCleanV3.Infrastructure.Data;
 namespace PearsCleanV3.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240111073537_AddMatches")]
+    partial class AddMatches
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -166,9 +169,6 @@ namespace PearsCleanV3.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -198,12 +198,6 @@ namespace PearsCleanV3.Infrastructure.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("ProfilePictureUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RealName")
-                        .HasColumnType("text");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
@@ -250,57 +244,11 @@ namespace PearsCleanV3.Infrastructure.Migrations
                     b.Property<string>("MatchedUserId")
                         .HasColumnType("text");
 
-                    b.Property<string>("SwipedUserId")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("MatchedUserId");
 
-                    b.HasIndex("SwipedUserId");
-
                     b.ToTable("Matches");
-                });
-
-            modelBuilder.Entity("PearsCleanV3.Domain.Entities.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("CreateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("LastModified")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserFromId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("UserToId")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserFromId");
-
-                    b.HasIndex("UserToId");
-
-                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("PearsCleanV3.Domain.Entities.TodoItem", b =>
@@ -437,28 +385,7 @@ namespace PearsCleanV3.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("MatchedUserId");
 
-                    b.HasOne("PearsCleanV3.Domain.Entities.ApplicationUser", "SwipedUser")
-                        .WithMany()
-                        .HasForeignKey("SwipedUserId");
-
                     b.Navigation("MatchedUser");
-
-                    b.Navigation("SwipedUser");
-                });
-
-            modelBuilder.Entity("PearsCleanV3.Domain.Entities.Message", b =>
-                {
-                    b.HasOne("PearsCleanV3.Domain.Entities.ApplicationUser", "UserFrom")
-                        .WithMany()
-                        .HasForeignKey("UserFromId");
-
-                    b.HasOne("PearsCleanV3.Domain.Entities.ApplicationUser", "UserTo")
-                        .WithMany()
-                        .HasForeignKey("UserToId");
-
-                    b.Navigation("UserFrom");
-
-                    b.Navigation("UserTo");
                 });
 
             modelBuilder.Entity("PearsCleanV3.Domain.Entities.TodoItem", b =>

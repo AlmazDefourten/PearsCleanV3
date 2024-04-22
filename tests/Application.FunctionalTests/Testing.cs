@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PearsCleanV3.Domain.Entities;
 
 namespace PearsCleanV3.Application.FunctionalTests;
 
