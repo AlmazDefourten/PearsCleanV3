@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using PearsCleanV3.Domain.Entities;
 using PearsCleanV3.Infrastructure;
 using PearsCleanV3.Infrastructure.Data;
 using PearsCleanV3.Web;
+using PearsCleanV3.Web.SignalRHubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,9 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddKeyVaultIfConfigured(builder.Configuration);
 
 builder.Services.AddApplicationServices();
+builder.Services.AddSignalR();
+
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebServices();
-builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -32,8 +39,10 @@ app.UseCors(x => x
     .SetIsOriginAllowed(origin => true) // allow any origin
     .AllowCredentials()); // allow credentials
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseHealthChecks("/health");
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseSwaggerUi3(settings =>
@@ -53,6 +62,8 @@ app.UseExceptionHandler(options => { });
 app.Map("/", () => Results.Redirect("/api"));
 
 app.MapEndpoints();
+
+app.MapHub<MessagesHub>("/messages");
 
 app.Run();
 
