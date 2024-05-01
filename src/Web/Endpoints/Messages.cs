@@ -1,4 +1,5 @@
-﻿using PearsCleanV3.Application.Chats;
+﻿using Microsoft.AspNetCore.Mvc;
+using PearsCleanV3.Application.Chats;
 using PearsCleanV3.Application.Chats.Commands;
 using PearsCleanV3.Application.Chats.Queries;
 using PearsCleanV3.Application.Common.Models;
@@ -13,6 +14,7 @@ public class Messages : EndpointGroupBase
     {
         app.MapGroup(this)
             .RequireAuthorization()
+            .DisableAntiforgery()
             .MapGet(GetMessages)
             .MapGet(GetChats, "GetChats")
             .MapPost(CreateMessage);
@@ -28,7 +30,7 @@ public class Messages : EndpointGroupBase
         return await sender.Send(query);
     }
     
-    public async Task CreateMessage(ISender sender, CreateMessageCommand command)
+    public async Task CreateMessage(ISender sender, [FromForm] CreateMessageCommand command)
     {
         await sender.Send(command);
     }

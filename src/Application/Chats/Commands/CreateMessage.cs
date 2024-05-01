@@ -1,17 +1,21 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using PearsCleanV3.Application.Common.Interfaces;
+using PearsCleanV3.Domain.Common;
 using PearsCleanV3.Domain.Entities;
 
 namespace PearsCleanV3.Application.Chats.Commands;
 
 public record CreateMessageCommand : IRequest
 {
-    public string? Message { get; init; }
-    public string? UserToId { get; set; }
+    public string? message { get; init; }
+    public string? userToId { get; set; }
+    
+    public IFormFile? file { get; init; }
 }
 
-public class CreateMatchCommandHandler(IApplicationDbContext context, UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor) : IRequestHandler<CreateMessageCommand>
+public class CreateMatchCommandHandler(IApplicationDbContext context, UserManager<ApplicationUser> userManager, 
+    IHttpContextAccessor contextAccessor, IFileStorage fileStorage) : IRequestHandler<CreateMessageCommand>
 {
     public async Task Handle(CreateMessageCommand request, CancellationToken cancellationToken)
     {
@@ -32,11 +36,17 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
         var entity = new Message
         {
             UserTo = await context.Users.FirstAsync(
-                x => x.Id == request.UserToId, cancellationToken: cancellationToken),
+                x => x.Id == request.userToId, cancellationToken: cancellationToken),
             UserFrom = currentUser,
-            Content = request.Message,
+            Content = request.message,
             CreateTime = DateTime.Now.ToUniversalTime()
         };
+        if (request.file != null)
+        {
+            var url = Guid.NewGuid().ToString();
+            await fileStorage.UploadPicture(url, request.file);
+            entity.PictureUrl = url;
+        }
 
         // TODO: сделать логгирование через events, сделать валидирование
         // entity.AddDomainEvent(new TodoItemCreatedEvent(entity));
@@ -44,5 +54,7 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
         context.Messages.Add(entity);
 
         await context.SaveChangesAsync(cancellationToken);
+        
+        
     }
 }

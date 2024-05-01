@@ -9,4 +9,6 @@ public class Message : BaseAuditableEntity
     public ApplicationUser? UserTo { get; set; }
     
     public DateTime? CreateTime { get; set; }
+    
+    public string? PictureUrl { get; set; }
 }

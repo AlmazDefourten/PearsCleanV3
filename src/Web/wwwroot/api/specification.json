@@ -188,18 +188,17 @@
           "Messages"
         ],
         "operationId": "CreateMessage",
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMessageCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 1
-        },
+        "parameters": [
+          {
+            "name": "command",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CreateMessageCommand"
+            },
+            "x-position": 1
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -1129,6 +1128,19 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "profilePictureUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "iconFile": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
+          "lastMessage": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -1142,6 +1154,11 @@
           },
           "userToId": {
             "type": "string",
+            "nullable": true
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
             "nullable": true
           }
         }
