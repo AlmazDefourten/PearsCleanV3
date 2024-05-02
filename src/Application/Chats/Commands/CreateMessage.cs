@@ -41,6 +41,7 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
             Content = request.message,
             CreateTime = DateTime.Now.ToUniversalTime()
         };
+        
         if (request.file != null)
         {
             var url = Guid.NewGuid().ToString();

@@ -10,7 +10,7 @@ public record GetMessagesQuery: IRequest<List<MessageDto>>
     public string? UserId { get; init; }
 }
 
-public class GetMessagesList(IApplicationDbContext context, IMapper mapper, IUser currentUser) : IRequestHandler<GetMessagesQuery, List<MessageDto>>
+public class GetMessagesList(IApplicationDbContext context, IMapper mapper, IUser currentUser, IFileStorage fileStorage) : IRequestHandler<GetMessagesQuery, List<MessageDto>>
 {
     public async Task<List<MessageDto>> Handle(GetMessagesQuery request, CancellationToken cancellationToken)
     {
@@ -25,6 +25,10 @@ public class GetMessagesList(IApplicationDbContext context, IMapper mapper, IUse
         foreach (var msg in messages)
         {
             msg.Me = msg.UserFromId == currentUser.Id;
+            if (msg.PictureUrl != null)
+            {
+                msg.File = await fileStorage.GetPicture(msg.PictureUrl);
+            }
         }
         
         return messages;

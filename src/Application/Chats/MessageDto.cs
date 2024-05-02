@@ -12,6 +12,10 @@ public class MessageDto
     
     public DateTime? CreateTime { get; set; }
     
+    public string? PictureUrl { get; set; }
+    
+    public byte[]? File { get; set; }
+    
     public bool Me { get; set; }
     
     private class Mapping : Profile

@@ -1109,6 +1109,15 @@
             "format": "date-time",
             "nullable": true
           },
+          "pictureUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "file": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          },
           "me": {
             "type": "boolean"
           }
