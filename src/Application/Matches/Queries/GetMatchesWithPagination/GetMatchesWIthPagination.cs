@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Internal;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Internal;
 using PearsCleanV3.Application.Common.Interfaces;
 using PearsCleanV3.Application.Common.Mappings;
 using PearsCleanV3.Application.Common.Models;
@@ -21,13 +23,41 @@ public class GetMatchesWithPaginationQueryValidator
     }
 }
 
-public class GetMatchesQueryHandler(IApplicationDbContext context, IUser user, IFileStorage fileStorage) : IRequestHandler<GetMatchesWithPaginationQuery, List<MatchesDto>>
+public class GetMatchesQueryHandler : IRequestHandler<GetMatchesWithPaginationQuery, List<MatchesDto>>
 {
+    private readonly IApplicationDbContext _context;
+    private readonly IFileStorage _fileStorage;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IHttpContextAccessor _contextAccessor;
+
+    public GetMatchesQueryHandler(IApplicationDbContext context, IFileStorage fileStorage, 
+        UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor)
+    {
+        _context = context;
+        _fileStorage = fileStorage;
+        _userManager = userManager;
+        _contextAccessor = contextAccessor;
+    }
+
     public async Task<List<MatchesDto>> Handle(GetMatchesWithPaginationQuery request, CancellationToken cancellationToken)
     {
-        var data = await context.Matches
-            .Where(x => x.MatchedUser != null && x.MatchedUser.Id == user.Id && x.SwipedUser != null)
-            .Join(context.Users, m => m.SwipedUser!.Id, u => u.Id,
+        var user = _contextAccessor.HttpContext?.User;
+
+        if (user is null)
+        {
+            throw new ArgumentNullException("Не найден текущий пользователь для создания совпадения");
+        }
+        
+        var currentUser = await _userManager.GetUserAsync(user);
+
+        if (currentUser == null)
+        {
+            throw new ArgumentNullException("Не найден текущий пользователь для создания совпадения");
+        }
+        
+        var data = await _context.Matches
+            .Where(x => x.MatchedUser != null && x.MatchedUser.Id == currentUser.Id && x.SwipedUser != null)
+            .Join(_context.Users, m => m.SwipedUser!.Id, u => u.Id,
                 (m, u) => new MatchesDto()
                 {
                     MatchedUserId = m.MatchedUser!.Id,
@@ -42,7 +72,7 @@ public class GetMatchesQueryHandler(IApplicationDbContext context, IUser user, I
         foreach (var match in data)
         {
             if (match.ProfilePictureUrl != null)
-                match.File = await fileStorage.GetPicture(match.ProfilePictureUrl);
+                match.File = await _fileStorage.GetPicture(match.ProfilePictureUrl);
         }
 
         return data;

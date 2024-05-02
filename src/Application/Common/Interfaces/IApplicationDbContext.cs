@@ -4,10 +4,6 @@ namespace PearsCleanV3.Application.Common.Interfaces;
 
 public interface IApplicationDbContext
 {
-    DbSet<TodoList> TodoLists { get; }
-
-    DbSet<TodoItem> TodoItems { get; }
-    
     DbSet<Match> Matches { get; }
     
     DbSet<ApplicationUser> Users { get; }

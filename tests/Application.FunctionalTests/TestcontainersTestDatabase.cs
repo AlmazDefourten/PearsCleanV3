@@ -3,23 +3,18 @@ using PearsCleanV3.Infrastructure.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Respawn;
-using Testcontainers.MsSql;
+using Testcontainers.PostgreSql;
 
 namespace PearsCleanV3.Application.FunctionalTests;
 
 public class TestcontainersTestDatabase : ITestDatabase
 {
-    private readonly MsSqlContainer _container;
+    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
+        .WithAutoRemove(true)
+        .Build();
     private DbConnection _connection = null!;
     private string _connectionString = null!;
     private Respawner _respawner = null!;
-
-    public TestcontainersTestDatabase()
-    {
-        _container = new MsSqlBuilder()
-            .WithAutoRemove(true)
-            .Build();
-    }
 
     public async Task InitialiseAsync()
     {
@@ -27,19 +22,23 @@ public class TestcontainersTestDatabase : ITestDatabase
 
         _connectionString = _container.GetConnectionString();
 
-        _connection = new SqlConnection(_connectionString);
-
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(_connectionString)
+            .UseNpgsql(_connectionString)
             .Options;
 
         var context = new ApplicationDbContext(options);
-
+        
         context.Database.Migrate();
-
-        _respawner = await Respawner.CreateAsync(_connectionString, new RespawnerOptions
+        
+        _connection = context.Database.GetDbConnection();
+        _connection.Open();
+        _respawner = await Respawner.CreateAsync(_connection, new RespawnerOptions
         {
-            TablesToIgnore = new Respawn.Graph.Table[] { "__EFMigrationsHistory" }
+            SchemasToInclude = new []
+            {
+                "public"
+            },
+            DbAdapter = DbAdapter.Postgres
         });
     }
 
@@ -50,7 +49,7 @@ public class TestcontainersTestDatabase : ITestDatabase
 
     public async Task ResetAsync()
     {
-        await _respawner.ResetAsync(_connectionString);
+        await _respawner.ResetAsync(_connection);
     }
 
     public async Task DisposeAsync()

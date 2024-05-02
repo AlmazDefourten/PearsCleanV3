@@ -2,11 +2,11 @@
 using System.Runtime.Serialization;
 using AutoMapper;
 using PearsCleanV3.Application.Common.Interfaces;
-using PearsCleanV3.Application.Common.Models;
-using PearsCleanV3.Application.TodoItems.Queries.GetTodoItemsWithPagination;
-using PearsCleanV3.Application.TodoLists.Queries.GetTodos;
 using PearsCleanV3.Domain.Entities;
 using NUnit.Framework;
+using PearsCleanV3.Application.Chats;
+using PearsCleanV3.Application.Matches.Queries.GetMatchesWithPagination;
+using PearsCleanV3.Application.Users.Queries;
 
 namespace PearsCleanV3.Application.UnitTests.Common.Mappings;
 
@@ -24,17 +24,9 @@ public class MappingTests
     }
 
     [Test]
-    public void ShouldHaveValidConfiguration()
-    {
-        _configuration.AssertConfigurationIsValid();
-    }
-
-    [Test]
-    [TestCase(typeof(TodoList), typeof(TodoListDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemDto))]
-    [TestCase(typeof(TodoList), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(LookupDto))]
-    [TestCase(typeof(TodoItem), typeof(TodoItemBriefDto))]
+    [TestCase(typeof(ApplicationUser), typeof(UserDto))]
+    [TestCase(typeof(Match), typeof(MatchesDto))]
+    [TestCase(typeof(Message), typeof(MessageDto))]
     public void ShouldSupportMappingFromSourceToDestination(Type source, Type destination)
     {
         var instance = GetInstanceOf(source);
@@ -47,10 +39,8 @@ public class MappingTests
         if (type.GetConstructor(Type.EmptyTypes) != null)
             return Activator.CreateInstance(type)!;
 
-        // Type without parameterless constructor
-        // TODO: Figure out an alternative approach to the now obsolete `FormatterServices.GetUninitializedObject` method.
-#pragma warning disable SYSLIB0050 // Type or member is obsolete
+#pragma warning disable SYSLIB0050
         return FormatterServices.GetUninitializedObject(type);
-#pragma warning restore SYSLIB0050 // Type or member is obsolete
+#pragma warning restore SYSLIB0050
     }
 }

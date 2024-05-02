@@ -1,7 +1,10 @@
-﻿using PearsCleanV3.Application.Common.Interfaces;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using PearsCleanV3.Application.Common.Interfaces;
 using PearsCleanV3.Application.Users.Queries;
 using PearsCleanV3.Application.Users.Queries.GetUsers;
 using PearsCleanV3.Domain.Common;
+using PearsCleanV3.Domain.Entities;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -13,23 +16,51 @@ public record GetChatsQuery: IRequest<List<ChatDto>>
     public string? UserId { get; init; }
 }
 
-public class GetChatsList(IApplicationDbContext context, IUser currentUser, IFileStorage fileStorage) : IRequestHandler<GetChatsQuery, List<ChatDto>>
+public class GetChatsList : IRequestHandler<GetChatsQuery, List<ChatDto>>
 {
+    private readonly IApplicationDbContext _context;
+    private readonly IFileStorage _fileStorage;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IHttpContextAccessor _contextAccessor;
+
+    public GetChatsList(IApplicationDbContext context, UserManager<ApplicationUser> userManager, 
+        IHttpContextAccessor contextAccessor, IFileStorage fileStorage)
+    {
+        _context = context;
+        _fileStorage = fileStorage;
+        _userManager = userManager;
+        _contextAccessor = contextAccessor;
+    }
+
     public async Task<List<ChatDto>> Handle(GetChatsQuery request, CancellationToken cancellationToken)
     {
-        var chats = await context.Messages
+        var user = _contextAccessor.HttpContext?.User;
+
+        if (user is null)
+        {
+            throw new ArgumentNullException("Не найден текущий пользователь для создания совпадения");
+        }
+        
+        var currentUser = await _userManager.GetUserAsync(user);
+
+        if (currentUser == null)
+        {
+            throw new ArgumentNullException("Не найден текущий пользователь для создания совпадения");
+        }
+        
+        var chats = await _context.Messages
             .Where(x => x.UserTo != null && x.UserTo.Id == currentUser.Id && x.UserFrom != null)
             .Select(x => new ChatDto()
             {
                 Id = x.UserFrom!.Id,
                 Title = x.UserFrom!.RealName,
                 ProfilePictureUrl = x.UserFrom!.ProfilePictureUrl,
-                LastMessage = context.Messages
+                LastMessage = _context.Messages
                     .Where(lm => lm.UserFrom!.Id == x.UserFrom!.Id || (lm.UserFrom!.Id == currentUser.Id && lm.UserTo!.Id == x.UserFrom!.Id))
                     .OrderByDescending(lm => lm.Id)
                     .FirstOrDefault() == null 
                     ? null 
-                    : context.Messages
+                    : _context.Messages
                     .Where(lm => lm.UserFrom!.Id == x.UserFrom!.Id || (lm.UserFrom!.Id == currentUser.Id && lm.UserTo!.Id == x.UserFrom!.Id))
                     .OrderByDescending(lm => lm.Id)
                     .FirstOrDefault()!
@@ -42,7 +73,7 @@ public class GetChatsList(IApplicationDbContext context, IUser currentUser, IFil
         {
             if (chat.ProfilePictureUrl != null)
             {
-                chat.IconFile = RoundImageProcessor.CropToSquare(await fileStorage.GetPicture(chat.ProfilePictureUrl));
+                chat.IconFile = RoundImageProcessor.CropToSquare(await _fileStorage.GetPicture(chat.ProfilePictureUrl));
             }
         }
         

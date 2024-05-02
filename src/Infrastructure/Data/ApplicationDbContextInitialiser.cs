@@ -67,7 +67,6 @@ public class ApplicationDbContextInitialiser
 
     public async Task TrySeedAsync()
     {
-        // Default roles
         var administratorRole = new IdentityRole(Roles.Administrator);
 
         if (_roleManager.Roles.All(r => r.Name != administratorRole.Name))
@@ -75,35 +74,26 @@ public class ApplicationDbContextInitialiser
             await _roleManager.CreateAsync(administratorRole);
         }
 
-        // Default users
-        var administrator = new ApplicationUser { UserName = "administrator@localhost", Email = "administrator@localhost" };
+        var administrator = new ApplicationUser { UserName = "admin@mail.ru", Email = "admin@mail.ru" };
 
         if (_userManager.Users.All(u => u.UserName != administrator.UserName))
         {
-            await _userManager.CreateAsync(administrator, "Administrator1!");
+            await _userManager.CreateAsync(administrator, "123654Gg.");
             if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
                 await _userManager.AddToRolesAsync(administrator, new [] { administratorRole.Name });
             }
         }
+        
+        var administratorSecond = new ApplicationUser { UserName = "admin1@mail.ru", Email = "admin1@mail.ru" };
 
-        // Default data
-        // Seed, if necessary
-        if (!_context.TodoLists.Any())
+        if (_userManager.Users.All(u => u.UserName != administratorSecond.UserName))
         {
-            _context.TodoLists.Add(new TodoList
+            await _userManager.CreateAsync(administratorSecond, "123654Gg.");
+            if (!string.IsNullOrWhiteSpace(administratorRole.Name))
             {
-                Title = "Todo List",
-                Items =
-                {
-                    new TodoItem { Title = "Make a todo list 📃" },
-                    new TodoItem { Title = "Check off the first item ✅" },
-                    new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
-                    new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
-                }
-            });
-
-            await _context.SaveChangesAsync();
+                await _userManager.AddToRolesAsync(administratorSecond, new [] { administratorRole.Name });
+            }
         }
     }
 }

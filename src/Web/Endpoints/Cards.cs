@@ -1,11 +1,6 @@
-﻿using PearsCleanV3.Application.Common.Models;
-using PearsCleanV3.Application.TodoLists.Queries.GetTodos;
-using PearsCleanV3.Application.Users.Commands.SetProfilePicture;
-using PearsCleanV3.Application.Users.Queries;
+﻿using PearsCleanV3.Application.Users.Queries;
 using PearsCleanV3.Application.Users.Queries.GetUserInfo;
 using PearsCleanV3.Application.Users.Queries.GetUsers;
-using PearsCleanV3.Domain.Entities;
-using PearsCleanV3.Infrastructure.Identity;
 
 namespace PearsCleanV3.Web.Endpoints;
 

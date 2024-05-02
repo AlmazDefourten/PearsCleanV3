@@ -14,19 +14,32 @@ public record CreateMessageCommand : IRequest
     public IFormFile? file { get; init; }
 }
 
-public class CreateMatchCommandHandler(IApplicationDbContext context, UserManager<ApplicationUser> userManager, 
-    IHttpContextAccessor contextAccessor, IFileStorage fileStorage) : IRequestHandler<CreateMessageCommand>
+public class CreateMatchCommandHandler : IRequestHandler<CreateMessageCommand>
 {
+    private readonly IApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IFileStorage _fileStorage;
+
+    public CreateMatchCommandHandler(IApplicationDbContext context, UserManager<ApplicationUser> userManager, 
+        IHttpContextAccessor contextAccessor, IFileStorage fileStorage)
+    {
+        _context = context;
+        _userManager = userManager;
+        _contextAccessor = contextAccessor;
+        _fileStorage = fileStorage;
+    }
+
     public async Task Handle(CreateMessageCommand request, CancellationToken cancellationToken)
     {
-        var user = contextAccessor.HttpContext?.User;
+        var user = _contextAccessor.HttpContext?.User;
 
         if (user is null)
         {
             throw new ArgumentNullException("Не найден текущий пользователь для создания совпадения");
         }
         
-        var currentUser = await userManager.GetUserAsync(user);
+        var currentUser = await _userManager.GetUserAsync(user);
 
         if (currentUser == null)
         {
@@ -35,7 +48,7 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
         
         var entity = new Message
         {
-            UserTo = await context.Users.FirstAsync(
+            UserTo = await _context.Users.FirstAsync(
                 x => x.Id == request.userToId, cancellationToken: cancellationToken),
             UserFrom = currentUser,
             Content = request.message,
@@ -45,16 +58,16 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
         if (request.file != null)
         {
             var url = Guid.NewGuid().ToString();
-            await fileStorage.UploadPicture(url, request.file);
+            await _fileStorage.UploadPicture(url, request.file);
             entity.PictureUrl = url;
         }
 
         // TODO: сделать логгирование через events, сделать валидирование
         // entity.AddDomainEvent(new TodoItemCreatedEvent(entity));
         
-        context.Messages.Add(entity);
+        _context.Messages.Add(entity);
 
-        await context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         
         
     }

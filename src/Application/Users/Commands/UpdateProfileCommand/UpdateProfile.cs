@@ -17,34 +17,47 @@ public record UpdateProfileCommand : IRequest
     public IFormFile? file { get; init; }
 }
 
-public class UpdateProfile(IApplicationDbContext context, IFileStorage fileStorage, 
-    UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor) : IRequestHandler<UpdateProfileCommand>
+public class UpdateProfile : IRequestHandler<UpdateProfileCommand>
 {
+    private readonly IApplicationDbContext _context;
+    private readonly IFileStorage _fileStorage;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IHttpContextAccessor _contextAccessor;
+
+    public UpdateProfile(IApplicationDbContext context, IFileStorage fileStorage, 
+        UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor)
+    {
+        _context = context;
+        _fileStorage = fileStorage;
+        _userManager = userManager;
+        _contextAccessor = contextAccessor;
+    }
+
     public async Task Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
     {
-        var user = contextAccessor.HttpContext?.User;
+        var user = _contextAccessor.HttpContext?.User;
 
         if (user is null)
         {
             throw new ArgumentNullException("Не найден текущий пользователь для создания совпадения");
         }
         
-        var currentUser = await userManager.GetUserAsync(user);
+        var currentUser = await _userManager.GetUserAsync(user);
 
         var url = Guid.NewGuid().ToString();
         
         // TODO: logging
-        var userDomain = await context.Users
+        var userDomain = await _context.Users
             .FirstOrDefaultAsync(x => x.Id == currentUser!.Id, cancellationToken: cancellationToken);
 
         if (request.file != null)
         {
-            await fileStorage.UploadPicture(url, request.file);
+            await _fileStorage.UploadPicture(url, request.file);
             userDomain!.ProfilePictureUrl = url;
         }
 
         userDomain!.RealName = request.realName;
         userDomain!.Description = request.description;
-        await context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

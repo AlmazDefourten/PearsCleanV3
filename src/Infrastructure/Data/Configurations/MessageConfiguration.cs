@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace PearsCleanV3.Infrastructure.Data.Configurations;
 
-public class TodoItemConfiguration : IEntityTypeConfiguration<Match>
+public class MessageConfiguration : IEntityTypeConfiguration<Message>
 {
-    public void Configure(EntityTypeBuilder<Match> builder)
+    public void Configure(EntityTypeBuilder<Message> builder)
     {
+        builder.Property(t => t.Content)
+            .HasMaxLength(400);
     }
 }

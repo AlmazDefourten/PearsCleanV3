@@ -1,29 +1,42 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using PearsCleanV3.Application.Common.Interfaces;
-using PearsCleanV3.Application.TodoItems.Commands.CreateTodoItem;
 using PearsCleanV3.Domain.Entities;
-using PearsCleanV3.Domain.Events;
 
 namespace PearsCleanV3.Application.Matches.Commands;
 
 public record CreateMatchCommand : IRequest<int>
 {
+    public string? SwipedUserId { get; init; }
+    
     public string? MatchedUserId { get; init; }
 }
 
-public class CreateMatchCommandHandler(IApplicationDbContext context, UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor) : IRequestHandler<CreateMatchCommand, int>
+public class CreateMatchCommandHandler : IRequestHandler<CreateMatchCommand, int>
 {
+    private readonly IApplicationDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IHttpContextAccessor _contextAccessor;
+
+    public CreateMatchCommandHandler(IApplicationDbContext context, UserManager<ApplicationUser> userManager, IHttpContextAccessor contextAccessor)
+    {
+        _context = context;
+        _userManager = userManager;
+        _contextAccessor = contextAccessor;
+    }
+
     public async Task<int> Handle(CreateMatchCommand request, CancellationToken cancellationToken)
     {
-        var user = contextAccessor.HttpContext?.User;
+        var user = _contextAccessor.HttpContext?.User;
 
         if (user is null)
         {
             throw new ArgumentNullException("Не найден текущий пользователь для создания совпадения");
         }
         
-        var currentUser = await userManager.GetUserAsync(user);
+        var currentUser = request.SwipedUserId == null 
+            ? await _userManager.GetUserAsync(user)
+            : await _context.Users.FindAsync(new object?[] { request.SwipedUserId }, cancellationToken: cancellationToken);
 
         if (currentUser == null)
         {
@@ -32,12 +45,12 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
         
         var entity = new Match
         {
-            MatchedUser = await context.Users.FirstAsync(
+            MatchedUser = await _context.Users.FirstAsync(
                 x => x.Id == request.MatchedUserId, cancellationToken: cancellationToken),
             SwipedUser = currentUser
         };
 
-        if (await context.Matches.AnyAsync(x =>
+        if (await _context.Matches.AnyAsync(x =>
                 x.MatchedUser != null && x.SwipedUser != null && x.SwipedUser.Id == currentUser.Id &&
                 entity.MatchedUser.Id == x.MatchedUser.Id, cancellationToken: cancellationToken))
         {
@@ -47,18 +60,18 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
         // TODO: сделать логгирование через events, сделать валидирование
         // entity.AddDomainEvent(new TodoItemCreatedEvent(entity));
         
-        context.Matches.Add(entity);
+        _context.Matches.Add(entity);
 
-        await context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         
-        var twoMatchesFrom = await context.Matches.AnyAsync(m => m.SwipedUser != null &&
+        var twoMatchesFrom = await _context.Matches.AnyAsync(m => m.SwipedUser != null &&
                                                                  m.SwipedUser!.Id == currentUser.Id &&
-                                                                 m.MatchedUser!.Id == context.Users.First(
+                                                                 m.MatchedUser!.Id == _context.Users.First(
                                                                      x => x.Id == request.MatchedUserId).Id, cancellationToken: cancellationToken);
         
-        var twoMatchesTo = await context.Matches.AnyAsync(m => m.SwipedUser != null &&
+        var twoMatchesTo = await _context.Matches.AnyAsync(m => m.SwipedUser != null &&
                                                                m.MatchedUser!.Id == currentUser.Id &&
-                                                               m.SwipedUser!.Id == context.Users.First(
+                                                               m.SwipedUser!.Id == _context.Users.First(
                                                                    x => x.Id == request.MatchedUserId).Id, cancellationToken: cancellationToken);
 
         if (!twoMatchesFrom || !twoMatchesTo)
@@ -72,7 +85,7 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
                 Content = "У вас мэтч! Начинайте общаться :)",
                 Created = DateTime.Now.ToUniversalTime(),
                 CreateTime = DateTime.Now.ToUniversalTime(),
-                UserFrom = await context.Users.FirstAsync(
+                UserFrom = await _context.Users.FirstAsync(
                     x => x.Id == request.MatchedUserId, cancellationToken: cancellationToken),
                 UserTo = currentUser
             };
@@ -83,14 +96,14 @@ public class CreateMatchCommandHandler(IApplicationDbContext context, UserManage
                 Created = DateTime.Now.ToUniversalTime(),
                 CreateTime = DateTime.Now.ToUniversalTime(),
                 UserFrom = currentUser,
-                UserTo = await context.Users.FirstAsync(
+                UserTo = await _context.Users.FirstAsync(
                     x => x.Id == request.MatchedUserId, cancellationToken: cancellationToken)
             };
 
-            context.Messages.Add(messageFrom);
-            context.Messages.Add(messageTo);
+            _context.Messages.Add(messageFrom);
+            _context.Messages.Add(messageTo);
             
-            await context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         return entity.Id;
